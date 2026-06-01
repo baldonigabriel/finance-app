@@ -1,0 +1,98 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum TransactionType {
+  income
+  expense
+}
+
+enum GoalStatus {
+  in_progress
+  completed
+  expired
+}
+
+// ─── Models ───────────────────────────────────────────────────────────────────
+
+model User {
+  id             String  @id @default(uuid())
+  email          String  @unique
+  password       String
+  name           String?
+  whatsappNumber String? @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  categories   Category[]
+  transactions Transaction[]
+  goals        Goal[]
+
+  @@map("users")
+}
+
+model Category {
+  id   String  @id @default(uuid())
+  name String
+  icon String?
+
+  userId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+  goals        Goal[]
+
+  @@unique([name, userId])
+  @@map("categories")
+}
+
+model Transaction {
+  id          String          @id @default(uuid())
+  type        TransactionType
+  amount      Decimal         @db.Decimal(10, 2)
+  description String?
+  date        DateTime        @default(now())
+
+  userId     String
+  categoryId String
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id])
+
+  @@map("transactions")
+}
+
+model Goal {
+  id            String     @id @default(uuid())
+  name          String
+  targetAmount  Decimal    @db.Decimal(10, 2)
+  currentAmount Decimal    @default(0) @db.Decimal(10, 2)
+  deadline      DateTime
+  status        GoalStatus @default(in_progress)
+
+  userId     String
+  categoryId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category Category? @relation(fields: [categoryId], references: [id])
+
+  @@map("goals")
+}
