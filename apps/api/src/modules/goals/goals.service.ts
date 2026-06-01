@@ -1,0 +1,56 @@
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { PrismaService } from '../../prisma/prisma.service';
+import { CreateGoalDto } from './dto/create-goal.dto';
+import { UpdateGoalDto } from './dto/update-goal.dto';
+
+@Injectable()
+export class GoalsService {
+  constructor(private prisma: PrismaService) {}
+
+  async create(userId: string, dto: CreateGoalDto) {
+    return this.prisma.goal.create({
+      data: {
+        name: dto.name,
+        targetAmount: dto.targetAmount,
+        deadline: new Date(dto.deadline),
+        categoryId: dto.categoryId,
+        userId,
+      },
+      include: { category: true },
+    });
+  }
+
+  async findAll(userId: string) {
+    return this.prisma.goal.findMany({
+      where: { userId },
+      include: { category: true },
+      orderBy: { deadline: 'asc' },
+    });
+  }
+
+  async findOne(userId: string, id: string) {
+    const goal = await this.prisma.goal.findUnique({ where: { id }, include: { category: true } });
+    if (!goal) throw new NotFoundException('Meta não encontrada');
+    if (goal.userId !== userId) throw new ForbiddenException();
+    return goal;
+  }
+
+  async update(userId: string, id: string, dto: UpdateGoalDto) {
+    await this.findOne(userId, id);
+
+    const data: Record<string, unknown> = {};
+    if (dto.name) data.name = dto.name;
+    if (dto.targetAmount !== undefined) data.targetAmount = dto.targetAmount;
+    if (dto.currentAmount !== undefined) data.currentAmount = dto.currentAmount;
+    if (dto.deadline) data.deadline = new Date(dto.deadline);
+    if (dto.status) data.status = dto.status;
+    if (dto.categoryId !== undefined) data.categoryId = dto.categoryId;
+
+    return this.prisma.goal.update({ where: { id }, data, include: { category: true } });
+  }
+
+  async remove(userId: string, id: string) {
+    await this.findOne(userId, id);
+    return this.prisma.goal.delete({ where: { id } });
+  }
+}

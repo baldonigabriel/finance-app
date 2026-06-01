@@ -1,0 +1,25 @@
+import { PartialType } from '@nestjs/swagger';
+import { IsEnum, IsNumber, IsOptional, Min } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import { CreateGoalDto } from './create-goal.dto';
+
+export enum GoalStatus {
+  in_progress = 'in_progress',
+  completed = 'completed',
+  expired = 'expired',
+}
+
+export class UpdateGoalDto extends PartialType(CreateGoalDto) {
+  @ApiProperty({ enum: GoalStatus, required: false })
+  @IsOptional()
+  @IsEnum(GoalStatus)
+  status?: GoalStatus;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  @Type(() => Number)
+  currentAmount?: number;
+}
