@@ -1,0 +1,26 @@
+{
+  "name": "finance-app",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm -r --parallel dev",
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "prisma:migrate": "pnpm --filter api exec prisma migrate dev",
+    "prisma:studio": "pnpm --filter api exec prisma studio",
+    "prisma:seed": "pnpm --filter api exec prisma db seed"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@nestjs/core",
+      "@prisma/client",
+      "@prisma/engines",
+      "esbuild",
+      "prisma"
+    ]
+  }
+}
