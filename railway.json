@@ -1,0 +1,12 @@
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "build": {
+    "builder": "NIXPACKS",
+    "buildCommand": "pnpm install --frozen-lockfile && pnpm --filter @finance-app/api build"
+  },
+  "deploy": {
+    "startCommand": "pnpm --filter @finance-app/api exec prisma migrate deploy && pnpm --filter @finance-app/api run start:prod",
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 3
+  }
+}
