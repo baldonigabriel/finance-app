@@ -313,6 +313,28 @@ O design system foi gerado com a skill `ui-ux-pro-max` e está documentado em `d
 
 ---
 
+## Ferramentas de Desenvolvimento com IA
+
+O projeto utiliza o [Claude Code](https://claude.ai/code) com as seguintes skills instaladas em `.claude/skills/`:
+
+| Skill | Finalidade |
+|---|---|
+| `ui-ux-pro-max` | Geração do design system — paleta de cores, tipografia, estilos de componentes e recomendações de gráficos. Output salvo em `design-system/finance-app/` |
+| `frontend-design` | Diretrizes de qualidade visual — evitar estética genérica de IA, escolhas tipográficas distintivas, composição espacial e micro-interações |
+
+### Como reinstalar as skills
+
+As skills não estão versionadas no repositório (são ferramentas locais de desenvolvimento). Para reinstalá-las em uma nova máquina, consulte a documentação do Claude Code ou o histórico de commits para entender as decisões de design já tomadas em `design-system/finance-app/MASTER.md`.
+
+### Decisões de design registradas
+
+Todas as decisões visuais estão documentadas em:
+
+- `design-system/finance-app/MASTER.md` — fonte da verdade global (cores, tipografia, sombras, componentes)
+- `design-system/finance-app/pages/dashboard.md` — overrides específicos do dashboard
+
+---
+
 ## Licença
 
 MIT
