@@ -1,54 +1,54 @@
 # Finance App
 
-Aplicativo financeiro pessoal com dashboard web e bot de WhatsApp integrado. Registre receitas e despesas pela interface web ou simplesmente enviando uma mensagem em linguagem natural pelo WhatsApp — a IA interpreta e lança automaticamente.
+Personal finance app with a web dashboard and integrated WhatsApp bot. Log income and expenses through the web interface or simply by sending a natural language message via WhatsApp — the AI interprets it and records the transaction automatically.
 
 ---
 
-## Funcionalidades
+## Features
 
-### Dashboard Web
-- **Cards de resumo** — total de receitas, despesas, saldo do mês e maior gasto
-- **Gráfico de pizza** — distribuição de gastos por categoria
-- **Gráfico de barras** — evolução mensal dos últimos 6 meses
-- **Transações recentes** — lista das últimas movimentações do mês
+### Web Dashboard
+- **Summary cards** — total income, expenses, monthly balance, and largest expense
+- **Pie chart** — expense distribution by category
+- **Bar chart** — monthly evolution over the last 6 months
+- **Recent transactions** — list of the latest movements for the month
 
-### Transações
-- CRUD completo de receitas e despesas
-- Filtros por período, categoria e tipo
-- Soft delete (registros nunca são perdidos permanentemente)
+### Transactions
+- Full CRUD for income and expenses
+- Filters by period, category, and type
+- Soft delete (records are never permanently lost)
 
-### Categorias
-- Categorias personalizadas por usuário
-- 7 categorias padrão criadas automaticamente no cadastro: Alimentação, Transporte, Saúde, Lazer, Moradia, Educação, Outros
+### Categories
+- Custom categories per user
+- 7 default categories created automatically at registration: Food, Transport, Health, Leisure, Housing, Education, Other
 
-### Metas Financeiras
-- Criação de metas com valor alvo e prazo
-- Acompanhamento de progresso
-- Status: em andamento, concluída ou expirada
+### Financial Goals
+- Create goals with a target amount and deadline
+- Progress tracking
+- Status: in progress, completed, or expired
 
-### Bot WhatsApp
-- Integração com a [Evolution API](https://github.com/EvolutionAPI/evolution-api)
-- Mensagens interpretadas por IA (Claude Haiku)
-- Comandos: `saldo`, `resumo`, `ajuda`
-- Exemplo: _"gastei 47 reais no uber"_ → transação registrada automaticamente
+### WhatsApp Bot
+- Integration with the [Evolution API](https://github.com/EvolutionAPI/evolution-api)
+- Messages interpreted by AI (Claude Haiku)
+- Commands: `balance`, `summary`, `help`
+- Example: _"spent 47 on uber"_ → transaction recorded automatically
 
 ---
 
 ## Stack
 
-| Camada | Tecnologia |
+| Layer | Technology |
 |---|---|
 | Backend | NestJS + Prisma + PostgreSQL |
 | Frontend | Next.js 14 (App Router) + Tailwind CSS + Recharts |
-| Autenticação | JWT (access token + refresh token) |
+| Authentication | JWT (access token + refresh token) |
 | WhatsApp | Evolution API (webhook) |
-| IA do Bot | Claude API — claude-haiku-4-5 |
+| Bot AI | Claude API — claude-haiku-4-5 |
 | Package Manager | pnpm workspaces |
 | Deploy | Railway (API + PostgreSQL) + Vercel (frontend) |
 
 ---
 
-## Estrutura do Monorepo
+## Monorepo Structure
 
 ```
 finance-app/
@@ -56,12 +56,12 @@ finance-app/
 │   ├── api/                    # NestJS backend
 │   │   ├── src/
 │   │   │   ├── modules/
-│   │   │   │   ├── auth/       # Registro, login, refresh token
-│   │   │   │   ├── users/      # Perfil do usuário
+│   │   │   │   ├── auth/       # Register, login, refresh token
+│   │   │   │   ├── users/      # User profile
 │   │   │   │   ├── transactions/
 │   │   │   │   ├── categories/
 │   │   │   │   ├── goals/
-│   │   │   │   └── whatsapp/   # Webhook + integração Claude API
+│   │   │   │   └── whatsapp/   # Webhook + Claude API integration
 │   │   │   ├── common/
 │   │   │   │   ├── decorators/ # @CurrentUser()
 │   │   │   │   ├── filters/    # PrismaExceptionFilter
@@ -72,49 +72,49 @@ finance-app/
 │   │       └── seed.ts
 │   └── web/                    # Next.js frontend
 │       ├── app/
-│       │   ├── (auth)/         # Login e cadastro
-│       │   ├── (dashboard)/    # Páginas protegidas
+│       │   ├── (auth)/         # Login and registration
+│       │   ├── (dashboard)/    # Protected pages
 │       │   └── layout.tsx
 │       ├── components/
 │       │   └── dashboard/      # CategoryDonut, MonthlyBar
-│       ├── services/           # Chamadas à API
+│       ├── services/           # API calls
 │       └── store/              # Zustand (auth)
 └── packages/
-    └── shared/                 # Tipos TypeScript compartilhados
+    └── shared/                 # Shared TypeScript types
 ```
 
 ---
 
-## Pré-requisitos
+## Prerequisites
 
 - [Node.js](https://nodejs.org/) >= 20
 - [pnpm](https://pnpm.io/) >= 9 — `npm install -g pnpm`
-- [Docker](https://www.docker.com/) (para o PostgreSQL local)
+- [Docker](https://www.docker.com/) (for local PostgreSQL)
 
 ---
 
-## Instalação e Setup
+## Installation and Setup
 
-### 1. Clone o repositório
+### 1. Clone the repository
 
 ```bash
 git clone https://github.com/seu-usuario/finance-app.git
 cd finance-app
 ```
 
-### 2. Instale as dependências
+### 2. Install dependencies
 
 ```bash
 pnpm install
 ```
 
-### 3. Suba o banco de dados
+### 3. Start the database
 
 ```bash
 docker compose up -d
 ```
 
-### 4. Configure as variáveis de ambiente
+### 4. Configure environment variables
 
 ```bash
 # API
@@ -124,38 +124,38 @@ cp .env.example apps/api/.env
 cp apps/web/.env.local.example apps/web/.env.local
 ```
 
-Edite `apps/api/.env` com os valores reais:
+Edit `apps/api/.env` with the real values:
 
 ```env
 DATABASE_URL=postgresql://finance:finance123@localhost:5432/finance_db
 
-JWT_SECRET=coloque-uma-string-longa-e-aleatoria-aqui
-JWT_REFRESH_SECRET=coloque-outra-string-longa-e-aleatoria-aqui
+JWT_SECRET=put-a-long-random-string-here
+JWT_REFRESH_SECRET=put-another-long-random-string-here
 JWT_EXPIRES_IN=15m
 JWT_REFRESH_EXPIRES_IN=7d
 
-ANTHROPIC_API_KEY=sk-ant-...       # Necessário para o bot WhatsApp
-EVOLUTION_API_URL=http://...       # URL da sua instância da Evolution API
+ANTHROPIC_API_KEY=sk-ant-...       # Required for the WhatsApp bot
+EVOLUTION_API_URL=http://...       # URL of your Evolution API instance
 EVOLUTION_API_KEY=...
 
 PORT=3000
 FRONTEND_URL=http://localhost:3001
 ```
 
-### 5. Crie as tabelas e popule o banco
+### 5. Create tables and seed the database
 
 ```bash
 pnpm --filter @finance-app/api run prisma:migrate --name init
 pnpm --filter @finance-app/api run prisma:seed
 ```
 
-O seed cria um usuário de teste: `admin@financeapp.com` / `admin123`
+The seed creates a test user: `admin@financeapp.com` / `admin123`
 
 ---
 
-## Rodando em Desenvolvimento
+## Running in Development
 
-Abra dois terminais:
+Open two terminals:
 
 ```bash
 # Terminal 1 — API (http://localhost:3000)
@@ -165,7 +165,7 @@ pnpm --filter @finance-app/api run dev
 pnpm --filter @finance-app/web run dev
 ```
 
-Ou rode tudo junto:
+Or run everything together:
 
 ```bash
 pnpm dev
@@ -175,30 +175,30 @@ pnpm dev
 
 ## URLs
 
-| Serviço | URL |
+| Service | URL |
 |---|---|
 | Frontend | http://localhost:3001 |
 | API | http://localhost:3000 |
-| Swagger (documentação da API) | http://localhost:3000/api/docs |
+| Swagger (API documentation) | http://localhost:3000/api/docs |
 | Prisma Studio | `pnpm --filter @finance-app/api run prisma:studio` |
 
 ---
 
-## Comandos úteis
+## Useful Commands
 
 ```bash
-# Desenvolvimento
-pnpm dev                                              # Roda api + web
-pnpm --filter @finance-app/api run dev               # Só o backend
-pnpm --filter @finance-app/web run dev               # Só o frontend
+# Development
+pnpm dev                                              # Run api + web
+pnpm --filter @finance-app/api run dev               # Backend only
+pnpm --filter @finance-app/web run dev               # Frontend only
 
-# Banco de dados
-pnpm --filter @finance-app/api run prisma:migrate    # Nova migration
+# Database
+pnpm --filter @finance-app/api run prisma:migrate    # New migration
 pnpm --filter @finance-app/api run prisma:seed       # Seed
 pnpm --filter @finance-app/api run prisma:studio     # Prisma Studio
 
-# Testes
-pnpm --filter @finance-app/api run test              # Testes unitários
+# Tests
+pnpm --filter @finance-app/api run test              # Unit tests
 pnpm --filter @finance-app/api run test:cov          # Coverage
 
 # Build
@@ -207,61 +207,61 @@ pnpm build
 
 ---
 
-## API — Endpoints principais
+## API — Main Endpoints
 
-Todos os endpoints (exceto `/auth`) exigem o header:
+All endpoints (except `/auth`) require the header:
 ```
 Authorization: Bearer <access_token>
 ```
 
-| Método | Rota | Descrição |
+| Method | Route | Description |
 |---|---|---|
-| `POST` | `/auth/register` | Cadastro |
+| `POST` | `/auth/register` | Registration |
 | `POST` | `/auth/login` | Login |
-| `POST` | `/auth/refresh` | Renovar token |
-| `GET` | `/users/me` | Perfil do usuário |
-| `PATCH` | `/users/me` | Atualizar perfil |
-| `GET` | `/transactions` | Listar transações (filtros: `type`, `categoryId`, `startDate`, `endDate`) |
-| `POST` | `/transactions` | Criar transação |
-| `GET` | `/transactions/summary` | Resumo financeiro do período |
-| `PATCH` | `/transactions/:id` | Atualizar transação |
-| `DELETE` | `/transactions/:id` | Remover transação (soft delete) |
-| `GET` | `/categories` | Listar categorias |
-| `POST` | `/categories` | Criar categoria |
-| `GET` | `/goals` | Listar metas |
-| `POST` | `/goals` | Criar meta |
-| `POST` | `/whatsapp/webhook` | Webhook da Evolution API |
+| `POST` | `/auth/refresh` | Refresh token |
+| `GET` | `/users/me` | User profile |
+| `PATCH` | `/users/me` | Update profile |
+| `GET` | `/transactions` | List transactions (filters: `type`, `categoryId`, `startDate`, `endDate`) |
+| `POST` | `/transactions` | Create transaction |
+| `GET` | `/transactions/summary` | Financial summary for the period |
+| `PATCH` | `/transactions/:id` | Update transaction |
+| `DELETE` | `/transactions/:id` | Remove transaction (soft delete) |
+| `GET` | `/categories` | List categories |
+| `POST` | `/categories` | Create category |
+| `GET` | `/goals` | List goals |
+| `POST` | `/goals` | Create goal |
+| `POST` | `/whatsapp/webhook` | Evolution API webhook |
 
-Documentação completa e interativa em **http://localhost:3000/api/docs**
+Full interactive documentation at **http://localhost:3000/api/docs**
 
 ---
 
-## Bot WhatsApp
+## WhatsApp Bot
 
-### Configuração
+### Setup
 
-1. Tenha uma instância da [Evolution API](https://github.com/EvolutionAPI/evolution-api) rodando
-2. Configure o webhook para apontar para `https://sua-api.com/whatsapp/webhook`
-3. O usuário deve vincular o número de WhatsApp no perfil (`PATCH /users/me` com `whatsappNumber`)
+1. Have an instance of the [Evolution API](https://github.com/EvolutionAPI/evolution-api) running
+2. Configure the webhook to point to `https://your-api.com/whatsapp/webhook`
+3. The user must link their WhatsApp number in the profile (`PATCH /users/me` with `whatsappNumber`)
 
-### Comandos disponíveis
+### Available Commands
 
-| Mensagem | Resposta |
+| Message | Response |
 |---|---|
-| `"gastei 50 no mercado"` | Registra despesa de R$ 50,00 em Alimentação |
-| `"recebi 3000 de salário"` | Registra receita de R$ 3.000,00 |
-| `saldo` ou `resumo` | Resumo financeiro do mês atual |
-| `ajuda` | Lista de comandos disponíveis |
+| `"spent 50 at the grocery store"` | Records an expense of $50.00 in Food |
+| `"received 3000 salary"` | Records income of $3,000.00 |
+| `balance` or `summary` | Financial summary for the current month |
+| `help` | List of available commands |
 
 ---
 
-## Banco de Dados
+## Database
 
-### Modelos
+### Models
 
 ```
 User
- ├── categories[]     (one-to-many, unique por [name, userId])
+ ├── categories[]     (one-to-many, unique per [name, userId])
  ├── transactions[]   (one-to-many, soft delete via deletedAt)
  └── goals[]          (one-to-many)
 
@@ -272,23 +272,23 @@ Transaction
 
 Goal
  ├── status: in_progress | completed | expired
- └── category? → Category (opcional)
+ └── category? → Category (optional)
 ```
 
 ---
 
 ## Design System
 
-O design system foi gerado com a skill `ui-ux-pro-max` e está documentado em `design-system/finance-app/MASTER.md`.
+The design system was generated with the `ui-ux-pro-max` skill and is documented in `design-system/finance-app/MASTER.md`.
 
-| Token | Valor |
+| Token | Value |
 |---|---|
-| Fonte | IBM Plex Sans |
+| Font | IBM Plex Sans |
 | Sidebar | `#0C0C0C` |
 | Background | `#F8F7F4` |
 | Accent | `#2563EB` |
-| Receita | `#16A34A` (emerald) |
-| Despesa | `#DC2626` (rose) |
+| Income | `#16A34A` (emerald) |
+| Expense | `#DC2626` (rose) |
 
 ---
 
@@ -296,45 +296,45 @@ O design system foi gerado com a skill `ui-ux-pro-max` e está documentado em `d
 
 ### API — Railway
 
-1. Crie um projeto no [Railway](https://railway.app/)
-2. Adicione um banco PostgreSQL
-3. Conecte o repositório e aponte o root para `apps/api`
-4. Configure as variáveis de ambiente (igual ao `.env.example`)
-5. Railway detecta NestJS automaticamente
+1. Create a project on [Railway](https://railway.app/)
+2. Add a PostgreSQL database
+3. Connect the repository and set the root to `apps/api`
+4. Configure the environment variables (same as `.env.example`)
+5. Railway detects NestJS automatically
 
 ### Frontend — Vercel
 
-1. Importe o repositório no [Vercel](https://vercel.com/)
-2. Configure o **Root Directory** para `apps/web`
-3. Adicione a variável de ambiente:
+1. Import the repository on [Vercel](https://vercel.com/)
+2. Set the **Root Directory** to `apps/web`
+3. Add the environment variable:
    ```
-   NEXT_PUBLIC_API_URL=https://sua-api.railway.app
+   NEXT_PUBLIC_API_URL=https://your-api.railway.app
    ```
 
 ---
 
-## Ferramentas de Desenvolvimento com IA
+## AI Development Tools
 
-O projeto utiliza o [Claude Code](https://claude.ai/code) com as seguintes skills instaladas em `.claude/skills/`:
+This project uses [Claude Code](https://claude.ai/code) with the following skills installed in `.claude/skills/`:
 
-| Skill | Finalidade |
+| Skill | Purpose |
 |---|---|
-| `ui-ux-pro-max` | Geração do design system — paleta de cores, tipografia, estilos de componentes e recomendações de gráficos. Output salvo em `design-system/finance-app/` |
-| `frontend-design` | Diretrizes de qualidade visual — evitar estética genérica de IA, escolhas tipográficas distintivas, composição espacial e micro-interações |
+| `ui-ux-pro-max` | Design system generation — color palette, typography, component styles, and chart recommendations. Output saved in `design-system/finance-app/` |
+| `frontend-design` | Visual quality guidelines — avoid generic AI aesthetics, distinctive typographic choices, spatial composition, and micro-interactions |
 
-### Como reinstalar as skills
+### How to reinstall the skills
 
-As skills não estão versionadas no repositório (são ferramentas locais de desenvolvimento). Para reinstalá-las em uma nova máquina, consulte a documentação do Claude Code ou o histórico de commits para entender as decisões de design já tomadas em `design-system/finance-app/MASTER.md`.
+Skills are not versioned in the repository (they are local development tools). To reinstall them on a new machine, refer to the Claude Code documentation or the commit history to understand the design decisions already made in `design-system/finance-app/MASTER.md`.
 
-### Decisões de design registradas
+### Recorded design decisions
 
-Todas as decisões visuais estão documentadas em:
+All visual decisions are documented in:
 
-- `design-system/finance-app/MASTER.md` — fonte da verdade global (cores, tipografia, sombras, componentes)
-- `design-system/finance-app/pages/dashboard.md` — overrides específicos do dashboard
+- `design-system/finance-app/MASTER.md` — global source of truth (colors, typography, shadows, components)
+- `design-system/finance-app/pages/dashboard.md` — dashboard-specific overrides
 
 ---
 
-## Licença
+## License
 
 MIT
