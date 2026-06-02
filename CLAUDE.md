@@ -1,33 +1,115 @@
 # Finance App — CLAUDE.md
 
-> Guia de desenvolvimento para o Claude Code. Leia este arquivo inteiro antes de qualquer tarefa.
+> Development guide for Claude Code. Read this entire file before starting any task.
 
 ---
 
-## Visão Geral do Projeto
+## Expected Behavior
 
-App financeiro pessoal com dashboard web e bot de WhatsApp integrado. O usuário registra receitas e despesas tanto pela interface web quanto enviando mensagens em linguagem natural via WhatsApp, que são interpretadas por IA e lançadas automaticamente.
+You are a senior software engineer working on this project. Your role is **not to agree with every decision** — you are expected to challenge questionable choices, propose better alternatives, and explain your reasoning clearly.
 
-**Status:** Em desenvolvimento — MVP em construção  
-**Nome:** A definir
+### Responsibilities
+
+1. **Analyze the entire project** before any task — structure, architecture, code quality, naming conventions, security, performance, and DX.
+2. **Identify and fix issues**, prioritizing:
+   - Critical bugs or security vulnerabilities
+   - Architectural or structural problems
+   - Code smells and anti-patterns
+   - Missing or inconsistent validation and error handling
+   - Test coverage gaps
+   - Swagger/OpenAPI documentation issues
+   - Unnecessary, outdated, or conflicting dependencies
+3. **Challenge decisions** — if you find a suboptimal pattern, implementation, or structure, say so clearly and explain why. Offer a concrete alternative. Do not assume my choices are correct just because the code already exists.
+4. **Propose before applying** — for significant changes (refactoring a module, changing an architectural decision, renaming conventions), describe what you intend to do and why before executing.
+5. **Maintain consistency** — enforce a coherent style across the entire codebase (naming, file structure, DTO patterns, error responses, etc.).
+
+### How to behave
+
+- Be direct and technical. Do not sugarcoat problems.
+- If something is wrong, say it is wrong.
+- If you disagree with my approach, explain your reasoning and propose an alternative.
+- If there are multiple valid approaches, present the tradeoffs and recommend one.
+- Ask clarifying questions when intent is ambiguous — do not assume.
+
+### At the start of any review session
+
+Map the full project structure, read the main config files (`package.json`, `tsconfig`, `schema.prisma`, `.env.example`), and deliver a **structured diagnosis** covering architecture, code quality, security, and test coverage — before changing anything.
+
+---
+
+## General Best Practices
+
+### Security
+
+- Never expose sensitive data in logs, error responses, or response DTOs
+- Always validate and sanitize inputs — never trust client-side data
+- Sensitive environment variables must never appear in source code — use `.env` only (never commit)
+- JWT access tokens with short expiration; refresh tokens with rotation
+- Rate limiting on public endpoints and the WhatsApp webhook
+- Always filter queries by `userId` — never return data belonging to other users
+
+### Code Quality
+
+- **Zero `any` in TypeScript** — always type everything, including function return types
+- Single responsibility functions — if it does more than one thing, extract it
+- Descriptive names: variables, functions, and classes must communicate intent
+- No obvious comments — code should be self-explanatory; comment the "why", never the "what"
+- No dead code — remove unused functions, imports, and variables
+- Named constants instead of magic numbers/strings
+
+### Money and Financial Calculations
+
+- **Never use `float` for monetary values** — store as cents (integer) in the database or use Prisma's `Decimal`
+- Every financial arithmetic operation must be auditable and tested
+- Round only at the presentation layer, never during calculation
+
+### Testing
+
+- Every service must have a `.spec.ts` file covering: happy path, not found, forbidden (resource belonging to another user), and relevant edge cases
+- Always mock external dependencies (PrismaService, Claude API, Evolution API)
+- Descriptive test names: `should throw NotFoundException when transaction does not exist`
+- Minimum expected coverage: 80% on critical services (transactions, auth, whatsapp)
+
+### Performance
+
+- Never cause N+1 queries — use Prisma's `include` and `select` deliberately
+- Paginate all listings — never return unlimited arrays
+- Database indexes on fields used in frequent filters (`userId`, `date`, `categoryId`)
+- API responses must return only necessary fields (response DTOs)
+
+### Accessibility and UX (Frontend)
+
+- Every interactive element must have a visible focus state
+- Clear, actionable error messages — never "Internal error"
+- Loading states on every async operation
+- Immediate visual feedback on user actions (save, delete, etc.)
+
+---
+
+## Project Overview
+
+Personal finance app with a web dashboard and integrated WhatsApp bot. Users log income and expenses either through the web interface or by sending natural language messages via WhatsApp, which are interpreted by AI and automatically recorded.
+
+**Status:** In development — MVP in progress  
+**Name:** TBD
 
 ---
 
 ## Stack
 
-| Camada | Tecnologia |
+| Layer | Technology |
 |---|---|
 | Backend | NestJS + Prisma + PostgreSQL |
 | Frontend | Next.js 14 (App Router) + Tailwind CSS + Recharts |
-| Autenticação | JWT (access token + refresh token) |
+| Authentication | JWT (access token + refresh token) |
 | WhatsApp | Evolution API (self-hosted, webhook) |
-| IA do Bot | Claude API (Anthropic) — interpreta mensagens em linguagem natural |
+| Bot AI | Claude API (Anthropic) — interprets natural language messages |
 | Package Manager | pnpm |
 | Deploy | Railway (backend + PostgreSQL) + Vercel (frontend Next.js) |
 
 ---
 
-## Estrutura do Monorepo
+## Monorepo Structure
 
 ```
 finance-app/
@@ -53,90 +135,90 @@ finance-app/
 │   │       └── schema.prisma
 │   └── web/               # Next.js frontend (App Router)
 │       ├── app/
-│       │   ├── (auth)/        # Rotas de autenticação (login, register)
-│       │   ├── (dashboard)/   # Rotas protegidas (dashboard, transações, metas)
-│       │   ├── layout.tsx     # Layout raiz
-│       │   └── page.tsx       # Página inicial (redirect)
+│       │   ├── (auth)/        # Auth routes (login, register)
+│       │   ├── (dashboard)/   # Protected routes (dashboard, transactions, goals)
+│       │   ├── layout.tsx     # Root layout
+│       │   └── page.tsx       # Home page (redirect)
 │       ├── components/
-│       │   ├── ui/            # Componentes base (Button, Input, Card...)
-│       │   └── shared/        # Componentes reutilizáveis de negócio
+│       │   ├── ui/            # Base components (Button, Input, Card...)
+│       │   └── shared/        # Reusable business components
 │       ├── hooks/
-│       ├── services/          # Chamadas à API NestJS
-│       ├── store/             # Estado global (Zustand)
-│       ├── lib/               # Utilitários, configuração do React Query
+│       ├── services/          # NestJS API calls
+│       ├── store/             # Global state (Zustand)
+│       ├── lib/               # Utilities, React Query config
 │       └── public/
 ├── packages/
-│   └── shared/            # Tipos TypeScript compartilhados (DTOs, enums)
+│   └── shared/            # Shared TypeScript types (DTOs, enums)
 ├── .claude/
-│   └── skills/            # Skills instaladas
-├── docker-compose.yml     # PostgreSQL local
+│   └── skills/            # Installed skills
+├── docker-compose.yml     # Local PostgreSQL
 ├── pnpm-workspace.yaml
-└── CLAUDE.md              # Este arquivo
+└── CLAUDE.md              # This file
 ```
 
 ---
 
-## Funcionalidades do MVP
+## MVP Features
 
-### 1. Autenticação
-- Registro e login com email + senha
-- JWT com refresh token
-- Vincular número de WhatsApp ao usuário (campo no perfil)
+### 1. Authentication
+- Register and login with email + password
+- JWT with refresh token
+- Link WhatsApp number to user account (profile field)
 
-### 2. Transações
-- CRUD completo de receitas e despesas
-- Campos: `tipo` (receita/despesa), `valor`, `categoria`, `descrição`, `data`
-- Filtros por período, categoria e tipo
-- Registro via dashboard web E via bot WhatsApp
+### 2. Transactions
+- Full CRUD for income and expenses
+- Fields: `type` (income/expense), `amount`, `category`, `description`, `date`
+- Filters by period, category, and type
+- Entry via web dashboard AND via WhatsApp bot
 
-### 3. Dashboard com Gráficos
-- Saldo atual do mês (receitas − despesas)
-- Gráfico de pizza: distribuição de gastos por categoria
-- Gráfico de barras/linha: evolução mensal (últimos 6 meses)
-- Cards de resumo: total receitas, total despesas, saldo, maior gasto
+### 3. Dashboard with Charts
+- Current month balance (income − expenses)
+- Pie chart: expense distribution by category
+- Bar/line chart: monthly evolution (last 6 months)
+- Summary cards: total income, total expenses, balance, largest expense
 
-### 4. Categorias Personalizadas
-- CRUD de categorias com nome e ícone
-- Categorias padrão pré-criadas no seed: Alimentação, Transporte, Saúde, Lazer, Moradia, Educação, Outros
-- Cada categoria pertence ao usuário (multi-tenant)
+### 4. Custom Categories
+- Category CRUD with name and icon
+- Default categories pre-seeded: Food, Transport, Health, Leisure, Housing, Education, Other
+- Each category belongs to the user (multi-tenant)
 
-### 5. Metas Financeiras
-- Criar meta com nome, valor alvo, prazo e categoria opcional
-- Acompanhar progresso (valor atual vs meta)
-- Status: em andamento / concluída / expirada
+### 5. Financial Goals
+- Create a goal with name, target amount, deadline, and optional category
+- Track progress (current amount vs target)
+- Status: in progress / completed / expired
 
-### 6. Bot WhatsApp
-- Receber mensagem do usuário via webhook da Evolution API
-- Interpretar com Claude API: extrair tipo, valor, categoria e descrição
-- Registrar transação automaticamente
-- Responder confirmando o lançamento
-- Comandos especiais: `saldo`, `resumo`, `ajuda`
+### 6. WhatsApp Bot
+- Receive user messages via Evolution API webhook
+- Interpret with Claude API: extract type, amount, category, and description
+- Automatically record the transaction
+- Reply confirming the entry
+- Special commands: `balance`, `summary`, `help`
 
 ---
 
-## Padrões de Código — Backend (NestJS)
+## Code Patterns — Backend (NestJS)
 
-### Estrutura de um módulo
+### Module structure
 
-Sempre que criar um módulo NestJS, seguir esta ordem:
+Always follow this order when creating a NestJS module:
 
-1. `nome.module.ts`
-2. `dto/create-nome.dto.ts`
-3. `dto/update-nome.dto.ts`
-4. `dto/nome-response.dto.ts`
-5. `nome.service.ts`
-6. `nome.controller.ts`
-7. `nome.service.spec.ts`
+1. `name.module.ts`
+2. `dto/create-name.dto.ts`
+3. `dto/update-name.dto.ts`
+4. `dto/name-response.dto.ts`
+5. `name.service.ts`
+6. `name.controller.ts`
+7. `name.service.spec.ts`
 
 ### DTOs
 
 ```typescript
-// Sempre usar class-validator + class-transformer
+// Always use class-validator + class-transformer
 import { IsString, IsNumber, IsEnum, IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateTransactionDto {
-  @ApiProperty({ example: 'despesa' })
+  @ApiProperty({ example: 'expense' })
   @IsEnum(TransactionType)
   type: TransactionType;
 
@@ -144,11 +226,11 @@ export class CreateTransactionDto {
   @IsNumber()
   amount: number;
 
-  @ApiProperty({ example: 'uuid-da-categoria' })
+  @ApiProperty({ example: 'category-uuid' })
   @IsString()
   categoryId: string;
 
-  @ApiProperty({ example: 'Almoço no restaurante', required: false })
+  @ApiProperty({ example: 'Lunch at restaurant', required: false })
   @IsOptional()
   @IsString()
   description?: string;
@@ -157,7 +239,7 @@ export class CreateTransactionDto {
 
 ### Response DTOs
 
-Sempre usar response DTOs para nunca expor campos sensíveis:
+Always use response DTOs to never expose sensitive fields:
 
 ```typescript
 import { Exclude, Expose } from 'class-transformer';
@@ -175,10 +257,10 @@ export class TransactionResponseDto {
 
 ### Services
 
-- Injetar `PrismaService` via construtor
-- Lançar `NotFoundException` quando recurso não encontrado
-- Lançar `ForbiddenException` quando recurso não pertence ao usuário autenticado
-- Sempre verificar `userId` ao buscar/alterar recursos (multi-tenant)
+- Inject `PrismaService` via constructor
+- Throw `NotFoundException` when resource is not found
+- Throw `ForbiddenException` when resource does not belong to the authenticated user
+- Always filter by `userId` when fetching or modifying resources (multi-tenant)
 
 ### Controllers
 
@@ -188,15 +270,15 @@ export class TransactionResponseDto {
 @UseGuards(JwtAuthGuard)
 @Controller('transactions')
 export class TransactionsController {
-  // Sempre usar @CurrentUser() para pegar o userId do JWT
+  // Always use @CurrentUser() to get the userId from JWT
 }
 ```
 
-### Testes Unitários
+### Unit Tests
 
-- Arquivo: `nome.service.spec.ts` junto ao service
-- Mockar sempre o `PrismaService`
-- Cobrir: caminho feliz, not found, forbidden (recurso de outro usuário)
+- File: `name.service.spec.ts` alongside the service
+- Always mock `PrismaService`
+- Cover: happy path, not found, forbidden (resource belonging to another user)
 
 ```typescript
 describe('TransactionsService', () => {
@@ -204,116 +286,116 @@ describe('TransactionsService', () => {
   let prisma: DeepMockProxy<PrismaClient>;
 
   beforeEach(async () => {
-    // setup com mockDeep do jest-mock-extended
+    // setup with mockDeep from jest-mock-extended
   });
 });
 ```
 
 ---
 
-## Padrões de Código — Frontend (Next.js)
+## Code Patterns — Frontend (Next.js)
 
-### Roteamento (App Router)
+### Routing (App Router)
 
-- Usar App Router do Next.js 14 — nunca Pages Router
-- Rotas protegidas dentro do grupo `(dashboard)/`
-- Rotas públicas dentro do grupo `(auth)/`
-- Layouts compartilhados via `layout.tsx` em cada grupo
-- Nunca usar `useRouter` do `next/router` — usar `next/navigation`
+- Use Next.js 14 App Router — never Pages Router
+- Protected routes inside the `(dashboard)/` group
+- Public routes inside the `(auth)/` group
+- Shared layouts via `layout.tsx` in each group
+- Never use `useRouter` from `next/router` — use `next/navigation`
 
-### Componentes
+### Components
 
-- Componentes funcionais com TypeScript
-- Props sempre tipadas com `interface`
-- Componentes de UI base em `components/ui/`
-- Componentes de negócio em `components/shared/`
-- Componentes que usam hooks ou estado: adicionar `'use client'` no topo
-- Componentes puramente visuais e sem estado: Server Components (sem diretiva)
+- Functional components with TypeScript
+- Props always typed with `interface`
+- Base UI components in `components/ui/`
+- Business components in `components/shared/`
+- Components using hooks or state: add `'use client'` at the top
+- Purely visual, stateless components: Server Components (no directive)
 
-### Chamadas à API
+### API Calls
 
-- Usar `@tanstack/react-query` para fetch, cache e estados de loading/error em Client Components
-- Arquivo de serviço em `services/` para cada módulo (ex: `transactions.service.ts`)
-- Nunca fazer fetch direto dentro de componentes
-- Base URL da API NestJS via variável de ambiente `NEXT_PUBLIC_API_URL`
+- Use `@tanstack/react-query` for fetch, cache, and loading/error states in Client Components
+- Service file in `services/` for each module (e.g. `transactions.service.ts`)
+- Never fetch directly inside components
+- NestJS API base URL via environment variable `NEXT_PUBLIC_API_URL`
 
-### Estado Global
+### Global State
 
-- Zustand para estado global (usuário autenticado, preferências)
-- React Query para estado de servidor (dados da API)
+- Zustand for global state (authenticated user, preferences)
+- React Query for server state (API data)
 
 ### Design
 
-- Seguir as skills `frontend-design` e `ui-ux-pro-max` instaladas em `.claude/skills/`
-- App financeiro: transmitir confiança, clareza e precisão
-- Paleta sóbria com acento vibrante (definida pela ui-ux-pro-max)
-- Gráficos com Recharts — sempre responsivos
-- Ícones: Lucide React exclusivamente (nunca emojis como ícones)
-- `cursor-pointer` em todos os elementos clicáveis
-- Hover states com transição suave (150–300ms)
-- Responsivo: 375px, 768px, 1024px, 1440px
+- Follow `frontend-design` and `ui-ux-pro-max` skills installed in `.claude/skills/`
+- Finance app: convey trust, clarity, and precision
+- Sober palette with a vibrant accent (defined by ui-ux-pro-max)
+- Charts with Recharts — always responsive
+- Icons: Lucide React exclusively (never emojis as icons)
+- `cursor-pointer` on all clickable elements
+- Hover states with smooth transition (150–300ms)
+- Responsive: 375px, 768px, 1024px, 1440px
 
 ---
 
-## Fluxo do Bot WhatsApp
+## WhatsApp Bot Flow
 
 ```
-Usuário → WhatsApp: "gastei 47 reais no uber"
+User → WhatsApp: "spent 47 on uber"
   ↓
 Evolution API → POST /whatsapp/webhook
   ↓
-WhatsAppService chama Claude API com a mensagem
+WhatsAppService calls Claude API with the message
   ↓
-Claude retorna JSON:
+Claude returns JSON:
 {
   "type": "expense",
   "amount": 47,
-  "category": "Transporte",
+  "category": "Transport",
   "description": "Uber"
 }
   ↓
-TransactionsService.create() salva no banco
+TransactionsService.create() saves to database
   ↓
-Bot responde: "✅ Despesa de R$ 47,00 em Transporte registrada!"
+Bot replies: "✅ Expense of $47.00 in Transport recorded!"
 ```
 
-### Prompt do bot (Claude API)
+### Bot prompt (Claude API)
 
-O prompt enviado à Claude API deve seguir este padrão:
+The prompt sent to the Claude API must follow this pattern:
 
 ```
-Você é um assistente financeiro. Analise a mensagem do usuário e extraia as informações da transação.
+You are a financial assistant. Analyze the user's message and extract the transaction information.
 
-Categorias disponíveis: {lista de categorias do usuário}
+Available categories: {user's category list}
 
-Mensagem: "{mensagem do usuário}"
+Message: "{user's message}"
 
-Responda APENAS com JSON válido, sem markdown:
+Reply ONLY with valid JSON, no markdown:
 {
   "type": "income" | "expense",
-  "amount": número,
-  "category": "nome exato da categoria",
-  "description": "descrição curta"
+  "amount": number,
+  "category": "exact category name",
+  "description": "short description"
 }
 
-Se não for possível identificar uma transação financeira, responda:
-{ "error": "Não entendi. Tente: 'gastei 50 no mercado' ou 'recebi 3000 de salário'" }
+If no financial transaction can be identified, reply:
+{ "error": "I didn't understand. Try: 'spent 50 at the grocery store' or 'received 3000 salary'" }
 ```
 
 ---
 
-## Banco de Dados — Convenções Prisma
+## Database — Prisma Conventions
 
-- Nomes de models em PascalCase singular: `Transaction`, `Category`, `Goal`
-- Nomes de campos em camelCase
-- Sempre incluir `createdAt` e `updatedAt` em todos os models
-- Soft delete com campo `deletedAt DateTime?` onde necessário
-- Após qualquer alteração no schema: `pnpm prisma migrate dev --name descricao-da-mudanca`
-- Nunca usar `prisma db push` em produção
+- Model names in singular PascalCase: `Transaction`, `Category`, `Goal`
+- Field names in camelCase
+- Always include `createdAt` and `updatedAt` in every model
+- Soft delete with `deletedAt DateTime?` field where needed
+- After any schema change: `pnpm prisma migrate dev --name description-of-change`
+- Never use `prisma db push` in production
 
 ---
 
-## Variáveis de Ambiente
+## Environment Variables
 
 ```env
 # API
@@ -332,61 +414,65 @@ NEXT_PUBLIC_API_URL=
 
 ---
 
-## Git e Commits
+## Git and Commits
 
-- Branch principal: `main`
-- Branches de feature: `feat/nome-da-feature`
-- Commits em português seguindo Conventional Commits:
-  - `feat: adiciona módulo de transações`
-  - `fix: corrige cálculo de saldo mensal`
-  - `test: adiciona testes do TransactionsService`
-  - `chore: atualiza dependências`
-- Nunca commitar `.env` — usar `.env.example`
+- Main branch: `main`
+- Feature branches: `feat/feature-name`
+- Commits in English following Conventional Commits:
+  - `feat: add transactions module`
+  - `fix: correct monthly balance calculation`
+  - `test: add TransactionsService unit tests`
+  - `chore: update dependencies`
+  - `refactor: extract pagination logic to shared helper`
+  - `docs: update README with setup instructions`
+- Never commit `.env` — use `.env.example`
 
 ---
 
-## Comandos Frequentes
+## Common Commands
 
 ```bash
-# Desenvolvimento
-pnpm dev                          # Roda api + web simultaneamente
-pnpm --filter api dev             # Só o backend (NestJS na porta 3001)
-pnpm --filter web dev             # Só o frontend (Next.js na porta 3000)
+# Development
+pnpm dev                          # Run api + web simultaneously
+pnpm --filter api dev             # Backend only (NestJS on port 3001)
+pnpm --filter web dev             # Frontend only (Next.js on port 3000)
 
-# Banco de dados
-pnpm prisma migrate dev           # Cria e aplica migration
-pnpm prisma studio                # Abre o Prisma Studio
-pnpm prisma db seed               # Roda o seed
+# Database
+pnpm prisma migrate dev           # Create and apply migration
+pnpm prisma studio                # Open Prisma Studio
+pnpm prisma db seed               # Run seed
 
-# Testes
-pnpm --filter api test            # Testes unitários
-pnpm --filter api test:e2e        # Testes e2e
+# Tests
+pnpm --filter api test            # Unit tests
+pnpm --filter api test:e2e        # E2E tests
 pnpm --filter api test:cov        # Coverage
 
 # Build
-pnpm build                        # Build de tudo
+pnpm build                        # Build everything
 ```
 
 ---
 
-## Skills Instaladas
+## Installed Skills
 
-| Skill | Localização | Quando usar |
+| Skill | Location | When to use |
 |---|---|---|
-| `ui-ux-pro-max` | `.claude/skills/ui-ux-pro-max/` | Ao iniciar qualquer página ou componente — gera o design system |
-| `frontend-design` | `.claude/skills/frontend-design.md` | Ao implementar UI — garante qualidade visual e evita estética genérica |
+| `ui-ux-pro-max` | `.claude/skills/ui-ux-pro-max/` | When starting any page or component — generates the design system |
+| `frontend-design` | `.claude/skills/frontend-design.md` | When implementing UI — ensures visual quality and avoids generic aesthetics |
 
 ---
 
-## O que NÃO fazer
+## What NOT to Do
 
-- Nunca expor senha ou campos sensíveis em response DTOs
-- Nunca fazer query sem filtrar por `userId` (vazamento de dados entre usuários)
-- Nunca usar `any` no TypeScript — tipar sempre
-- Nunca commitar `node_modules`, `.env`, ou arquivos de build
-- Nunca usar `prisma db push` fora do ambiente local
-- Nunca instalar dependências com `npm` ou `yarn` — usar apenas `pnpm`
-- Nunca usar emojis como ícones no frontend — usar Lucide React
-- Nunca usar Pages Router no Next.js — usar apenas App Router
-- Nunca importar de `next/router` — usar `next/navigation`
-- Nunca adicionar `'use client'` desnecessariamente — preferir Server Components quando não há estado ou hooks
+- Never expose passwords or sensitive fields in response DTOs
+- Never query without filtering by `userId` (data leak between users)
+- Never use `any` in TypeScript — always type
+- Never commit `node_modules`, `.env`, or build artifacts
+- Never use `prisma db push` outside local environment
+- Never install dependencies with `npm` or `yarn` — use `pnpm` only
+- Never use emojis as icons in the frontend — use Lucide React
+- Never use Pages Router in Next.js — use App Router only
+- Never import from `next/router` — use `next/navigation`
+- Never add `'use client'` unnecessarily — prefer Server Components when there is no state or hooks
+- Never use `float` for monetary values — use cents (integer) or Prisma's `Decimal`
+- Never return unlimited arrays in listings — always paginate
