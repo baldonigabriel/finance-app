@@ -25,12 +25,17 @@ async function main() {
         email,
         name: 'Admin',
         password: await bcrypt.hash('admin123', 10),
+        isVerified: true,
         categories: { create: DEFAULT_CATEGORIES },
       },
     });
     console.log(`✅ Test user created: ${user.email} / admin123`);
   } else {
-    console.log(`ℹ️  Test user already exists: ${email}`);
+    await prisma.user.update({
+      where: { email },
+      data: { isVerified: true },
+    });
+    console.log(`ℹ️  Test user already exists and is now verified: ${email}`);
   }
 
   console.log('🎉 Seed completed!');

@@ -29,6 +29,10 @@ model User {
   name           String?
   whatsappNumber String? @unique
 
+  isVerified              Boolean   @default(false)
+  verificationCode        String?
+  verificationCodeExpiresAt DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

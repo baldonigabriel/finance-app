@@ -28,6 +28,10 @@ export default function LoginPage() {
       setAuth(data.accessToken, data.refreshToken, data.user);
       router.push('/dashboard');
     } catch (err) {
+      if (axios.isAxiosError(err) && err.response?.status === 403) {
+        router.push(`/verify-email?email=${encodeURIComponent(email)}`);
+        return;
+      }
       setError(
         axios.isAxiosError(err) ? (err.response?.data?.message ?? 'Erro ao entrar') : 'Erro ao entrar',
       );
