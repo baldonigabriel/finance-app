@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
@@ -34,21 +34,31 @@ export class TransactionsService {
       where.date = dateFilter;
     }
 
-    return this.prisma.transaction.findMany({
-      where,
-      include: { category: true },
-      orderBy: { date: 'desc' },
-    });
+    const page = filters.page ?? 1;
+    const limit = filters.limit ?? 20;
+    const skip = (page - 1) * limit;
+
+    const [data, total] = await Promise.all([
+      this.prisma.transaction.findMany({
+        where,
+        include: { category: true },
+        orderBy: { date: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.transaction.count({ where }),
+    ]);
+
+    return { data, total, page, limit };
   }
 
   async findOne(userId: string, id: string) {
     const transaction = await this.prisma.transaction.findFirst({
-      where: { id, deletedAt: null },
+      where: { id, userId, deletedAt: null },
       include: { category: true },
     });
 
     if (!transaction) throw new NotFoundException('Transação não encontrada');
-    if (transaction.userId !== userId) throw new ForbiddenException();
 
     return transaction;
   }
@@ -71,28 +81,47 @@ export class TransactionsService {
     return this.prisma.transaction.update({ where: { id }, data: { deletedAt: new Date() } });
   }
 
-  async getSummary(userId: string, startDate?: Date, endDate?: Date) {
-    const where: Record<string, unknown> = { userId, deletedAt: null };
-
-    if (startDate || endDate) {
-      const dateFilter: Record<string, Date> = {};
-      if (startDate) dateFilter.gte = startDate;
-      if (endDate) dateFilter.lte = endDate;
-      where.date = dateFilter;
-    }
-
-    const transactions = await this.prisma.transaction.findMany({
-      where,
-      select: { type: true, amount: true },
+  async getMonthlySummaries(userId: string, months: number) {
+    const now = new Date();
+    const ranges = Array.from({ length: months }, (_, i) => {
+      const offset = months - 1 - i;
+      const start = new Date(now.getFullYear(), now.getMonth() - offset, 1);
+      const end = new Date(now.getFullYear(), now.getMonth() - offset + 1, 0, 23, 59, 59, 999);
+      const label = start.toLocaleDateString('pt-BR', { month: 'short' })
+        .replace('.', '')
+        .replace(/^\w/, (c) => c.toUpperCase());
+      return { start, end, label };
     });
 
-    const totalIncome = transactions
-      .filter((t) => t.type === 'income')
-      .reduce((sum, t) => sum + Number(t.amount), 0);
+    return Promise.all(
+      ranges.map(async ({ start, end, label }) => {
+        const summary = await this.getSummary(userId, start, end);
+        return { ...summary, month: label };
+      }),
+    );
+  }
 
-    const totalExpense = transactions
-      .filter((t) => t.type === 'expense')
-      .reduce((sum, t) => sum + Number(t.amount), 0);
+  async getSummary(userId: string, startDate?: Date, endDate?: Date) {
+    const dateFilter =
+      startDate || endDate
+        ? { date: { ...(startDate ? { gte: startDate } : {}), ...(endDate ? { lte: endDate } : {}) } }
+        : {};
+
+    const baseWhere = { userId, deletedAt: null, ...dateFilter };
+
+    const [incomeAgg, expenseAgg] = await Promise.all([
+      this.prisma.transaction.aggregate({
+        where: { ...baseWhere, type: 'income' },
+        _sum: { amount: true },
+      }),
+      this.prisma.transaction.aggregate({
+        where: { ...baseWhere, type: 'expense' },
+        _sum: { amount: true },
+      }),
+    ]);
+
+    const totalIncome = Number(incomeAgg._sum.amount ?? 0);
+    const totalExpense = Number(expenseAgg._sum.amount ?? 0);
 
     return { totalIncome, totalExpense, balance: totalIncome - totalExpense };
   }

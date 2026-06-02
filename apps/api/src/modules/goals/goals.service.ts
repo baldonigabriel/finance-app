@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateGoalDto } from './dto/create-goal.dto';
 import { UpdateGoalDto } from './dto/update-goal.dto';
@@ -22,16 +22,18 @@ export class GoalsService {
 
   async findAll(userId: string) {
     return this.prisma.goal.findMany({
-      where: { userId },
+      where: { userId, deletedAt: null },
       include: { category: true },
       orderBy: { deadline: 'asc' },
     });
   }
 
   async findOne(userId: string, id: string) {
-    const goal = await this.prisma.goal.findUnique({ where: { id }, include: { category: true } });
+    const goal = await this.prisma.goal.findFirst({
+      where: { id, userId, deletedAt: null },
+      include: { category: true },
+    });
     if (!goal) throw new NotFoundException('Meta não encontrada');
-    if (goal.userId !== userId) throw new ForbiddenException();
     return goal;
   }
 
@@ -51,6 +53,6 @@ export class GoalsService {
 
   async remove(userId: string, id: string) {
     await this.findOne(userId, id);
-    return this.prisma.goal.delete({ where: { id } });
+    await this.prisma.goal.update({ where: { id }, data: { deletedAt: new Date() } });
   }
 }

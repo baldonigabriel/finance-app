@@ -3,7 +3,31 @@ import { ConfigService } from '@nestjs/config';
 import Anthropic from '@anthropic-ai/sdk';
 import { PrismaService } from '../../prisma/prisma.service';
 import { TransactionsService } from '../transactions/transactions.service';
-import { TransactionType } from '../transactions/dto/create-transaction.dto';
+import { TransactionType } from '@finance-app/shared';
+
+interface ParsedTransaction {
+  type: TransactionType;
+  amount: number;
+  category: string;
+  description?: string;
+}
+
+interface ParsedError {
+  error: string;
+}
+
+function isValidTransaction(val: unknown): val is ParsedTransaction {
+  if (typeof val !== 'object' || val === null) return false;
+  const v = val as Record<string, unknown>;
+  if (v.type !== 'income' && v.type !== 'expense') return false;
+  if (typeof v.amount !== 'number' || !isFinite(v.amount) || v.amount <= 0) return false;
+  if (typeof v.category !== 'string' || v.category.trim() === '') return false;
+  return true;
+}
+
+function isErrorResponse(val: unknown): val is ParsedError {
+  return typeof val === 'object' && val !== null && typeof (val as Record<string, unknown>).error === 'string';
+}
 
 @Injectable()
 export class WhatsappService {
@@ -67,30 +91,34 @@ Se não for possível identificar uma transação financeira, responda:
     const content = response.content[0];
     if (content.type !== 'text') return { reply: 'Erro ao processar mensagem.' };
 
-    let parsed: { type?: string; amount?: number; category?: string; description?: string; error?: string };
+    let parsed: unknown;
     try {
-      parsed = JSON.parse(content.text) as typeof parsed;
+      parsed = JSON.parse(content.text);
     } catch {
       return { reply: 'Erro ao processar mensagem. Tente novamente.' };
     }
 
-    if (parsed.error) return { reply: parsed.error };
+    if (isErrorResponse(parsed)) return { reply: parsed.error };
+
+    if (!isValidTransaction(parsed)) {
+      return { reply: 'Não consegui identificar a transação. Tente: "gastei 50 no mercado" ou "recebi 3000 de salário".' };
+    }
 
     const category = categories.find(
-      (c) => c.name.toLowerCase() === parsed.category?.toLowerCase(),
+      (c) => c.name.toLowerCase() === parsed.category.toLowerCase(),
     );
     if (!category) return { reply: `Categoria "${parsed.category}" não encontrada.` };
 
     await this.transactionsService.create(userId, {
-      type: parsed.type as TransactionType,
-      amount: parsed.amount!,
+      type: parsed.type,
+      amount: parsed.amount,
       categoryId: category.id,
       description: parsed.description,
     });
 
     const label = parsed.type === 'expense' ? 'Despesa' : 'Receita';
     const brl = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
-    return { reply: `✅ ${label} de ${brl.format(parsed.amount!)} em ${category.name} registrada!` };
+    return { reply: `✅ ${label} de ${brl.format(parsed.amount)} em ${category.name} registrada!` };
   }
 
   private async handleSummary(userId: string) {

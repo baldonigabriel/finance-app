@@ -11,6 +11,7 @@ import {
   type Transaction,
   type TransactionSummary,
   type MonthlySummary,
+  type PaginatedTransactions,
 } from '@/services/transactions.service';
 
 // ─── Recharts só no client (evita SSR mismatch) ──────────────────────────────
@@ -43,17 +44,17 @@ function useSummary() {
 
 function useMonthExpenses() {
   const { startDate, endDate } = getMonthRange();
-  return useQuery<Transaction[]>({
+  return useQuery<PaginatedTransactions>({
     queryKey: ['transactions', 'expenses', startDate],
-    queryFn: () => fetchTransactions({ startDate, endDate, type: 'expense' }),
+    queryFn: () => fetchTransactions({ startDate, endDate, type: 'expense', limit: 100 }),
   });
 }
 
 function useRecentTransactions() {
   const { startDate, endDate } = getMonthRange();
-  return useQuery<Transaction[]>({
+  return useQuery<PaginatedTransactions>({
     queryKey: ['transactions', 'all', startDate],
-    queryFn: () => fetchTransactions({ startDate, endDate }),
+    queryFn: () => fetchTransactions({ startDate, endDate, limit: 8 }),
   });
 }
 
@@ -132,7 +133,7 @@ function RecentTransactions({ transactions, loading }: { transactions: Transacti
 
   return (
     <div className="divide-y divide-zinc-100">
-      {transactions.slice(0, 8).map((tx) => (
+      {transactions.map((tx) => (
         <div
           key={tx.id}
           className="flex items-center gap-3 px-5 py-3.5 hover:bg-zinc-50 transition-colors duration-150"
@@ -175,9 +176,12 @@ function RecentTransactions({ transactions, loading }: { transactions: Transacti
 
 export default function DashboardPage() {
   const { data: summary, isLoading: loadingSummary } = useSummary();
-  const { data: expenses, isLoading: loadingExpenses } = useMonthExpenses();
-  const { data: recents, isLoading: loadingRecents } = useRecentTransactions();
+  const { data: expensePage, isLoading: loadingExpenses } = useMonthExpenses();
+  const { data: recentPage, isLoading: loadingRecents } = useRecentTransactions();
   const { data: evolution, isLoading: loadingEvolution } = useMonthlyEvolution();
+
+  const expenses = expensePage?.data;
+  const recents = recentPage?.data;
 
   const biggest = expenses?.length
     ? expenses.reduce((max, t) => (Number(t.amount) > Number(max.amount) ? t : max))
@@ -263,9 +267,9 @@ export default function DashboardPage() {
             <p className="text-[13px] font-medium text-zinc-700">Transações recentes</p>
             <p className="text-[11px] text-zinc-400 mt-0.5">este mês</p>
           </div>
-          {recents && recents.length > 8 && (
+          {recentPage && recentPage.total > recentPage.limit && (
             <span className="text-[12px] text-zinc-400">
-              mostrando 8 de {recents.length}
+              showing {recentPage.limit} of {recentPage.total}
             </span>
           )}
         </div>

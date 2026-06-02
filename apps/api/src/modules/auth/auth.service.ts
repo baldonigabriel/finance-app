@@ -9,6 +9,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcryptjs';
+import { randomInt, createHash } from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EmailService } from './email.service';
 import { RegisterDto } from './dto/register.dto';
@@ -25,8 +26,12 @@ const DEFAULT_CATEGORIES = [
   { name: 'Outros', icon: 'circle-ellipsis' },
 ];
 
-function generateCode() {
-  return Math.floor(1000 + Math.random() * 9000).toString();
+function generateCode(): string {
+  return randomInt(1000, 10000).toString();
+}
+
+function hashCode(code: string): string {
+  return createHash('sha256').update(code).digest('hex');
 }
 
 function codeExpiresAt() {
@@ -55,7 +60,7 @@ export class AuthService {
         password: await bcrypt.hash(dto.password, 10),
         whatsappNumber: dto.whatsappNumber,
         isVerified: false,
-        verificationCode: code,
+        verificationCode: hashCode(code),
         verificationCodeExpiresAt: codeExpiresAt(),
         categories: { create: DEFAULT_CATEGORIES },
       },
@@ -71,7 +76,7 @@ export class AuthService {
 
     if (!user) throw new NotFoundException('Usuário não encontrado');
     if (user.isVerified) throw new BadRequestException('E-mail já verificado');
-    if (!user.verificationCode || user.verificationCode !== dto.code) {
+    if (!user.verificationCode || user.verificationCode !== hashCode(dto.code)) {
       throw new BadRequestException('Código inválido');
     }
     if (!user.verificationCodeExpiresAt || user.verificationCodeExpiresAt < new Date()) {
@@ -97,7 +102,7 @@ export class AuthService {
 
     await this.prisma.user.update({
       where: { id: user.id },
-      data: { verificationCode: code, verificationCodeExpiresAt: codeExpiresAt() },
+      data: { verificationCode: hashCode(code), verificationCodeExpiresAt: codeExpiresAt() },
     });
 
     await this.emailService.sendVerificationCode(email, code, user.name ?? '');

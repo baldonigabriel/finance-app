@@ -11,11 +11,16 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { plainToInstance } from 'class-transformer';
 import { CategoriesService } from './categories.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
+import { CategoryResponseDto } from './dto/category-response.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser, CurrentUserPayload } from '../../common/decorators/current-user.decorator';
+
+const toDto = (data: unknown) =>
+  plainToInstance(CategoryResponseDto, data, { excludeExtraneousValues: true });
 
 @ApiTags('categories')
 @ApiBearerAuth()
@@ -25,36 +30,40 @@ export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Criar categoria' })
-  create(@CurrentUser() user: CurrentUserPayload, @Body() dto: CreateCategoryDto) {
-    return this.categoriesService.create(user.userId, dto);
+  @ApiOperation({ summary: 'Create a category' })
+  async create(@CurrentUser() user: CurrentUserPayload, @Body() dto: CreateCategoryDto) {
+    const result = await this.categoriesService.create(user.userId, dto);
+    return toDto(result);
   }
 
   @Get()
-  @ApiOperation({ summary: 'Listar categorias do usuário' })
-  findAll(@CurrentUser() user: CurrentUserPayload) {
-    return this.categoriesService.findAll(user.userId);
+  @ApiOperation({ summary: 'List user categories' })
+  async findAll(@CurrentUser() user: CurrentUserPayload) {
+    const result = await this.categoriesService.findAll(user.userId);
+    return toDto(result);
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Buscar categoria por ID' })
-  findOne(@CurrentUser() user: CurrentUserPayload, @Param('id') id: string) {
-    return this.categoriesService.findOne(user.userId, id);
+  @ApiOperation({ summary: 'Get category by ID' })
+  async findOne(@CurrentUser() user: CurrentUserPayload, @Param('id') id: string) {
+    const result = await this.categoriesService.findOne(user.userId, id);
+    return toDto(result);
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Atualizar categoria' })
-  update(
+  @ApiOperation({ summary: 'Update a category' })
+  async update(
     @CurrentUser() user: CurrentUserPayload,
     @Param('id') id: string,
     @Body() dto: UpdateCategoryDto,
   ) {
-    return this.categoriesService.update(user.userId, id, dto);
+    const result = await this.categoriesService.update(user.userId, id, dto);
+    return toDto(result);
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Remover categoria' })
+  @ApiOperation({ summary: 'Delete a category' })
   remove(@CurrentUser() user: CurrentUserPayload, @Param('id') id: string) {
     return this.categoriesService.remove(user.userId, id);
   }

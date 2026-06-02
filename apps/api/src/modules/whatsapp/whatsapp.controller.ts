@@ -1,6 +1,7 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, Logger } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, HttpStatus, Logger, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { WhatsappService } from './whatsapp.service';
+import { WebhookGuard } from '../../common/guards/webhook.guard';
 
 @ApiTags('whatsapp')
 @Controller('whatsapp')
@@ -11,7 +12,8 @@ export class WhatsappController {
 
   @Post('webhook')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Receber webhook da Evolution API' })
+  @UseGuards(WebhookGuard)
+  @ApiOperation({ summary: 'Receive Evolution API webhook (requires x-api-key header)' })
   async webhook(@Body() body: Record<string, unknown>) {
     if (body['event'] !== 'messages.upsert') return { received: true };
 

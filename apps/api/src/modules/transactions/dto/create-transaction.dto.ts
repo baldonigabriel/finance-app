@@ -1,11 +1,9 @@
 import { IsString, IsNumber, IsEnum, IsOptional, IsDateString, Min } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
+import { TransactionType } from '@finance-app/shared';
 
-export enum TransactionType {
-  income = 'income',
-  expense = 'expense',
-}
+export { TransactionType };
 
 export class CreateTransactionDto {
   @ApiProperty({ enum: TransactionType, example: TransactionType.expense })

@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  ForbiddenException,
-  ConflictException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
@@ -26,9 +21,8 @@ export class CategoriesService {
   }
 
   async findOne(userId: string, id: string) {
-    const category = await this.prisma.category.findUnique({ where: { id } });
+    const category = await this.prisma.category.findFirst({ where: { id, userId } });
     if (!category) throw new NotFoundException('Categoria não encontrada');
-    if (category.userId !== userId) throw new ForbiddenException();
     return category;
   }
 
