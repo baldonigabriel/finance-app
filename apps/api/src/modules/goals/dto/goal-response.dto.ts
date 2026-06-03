@@ -1,4 +1,4 @@
-import { Exclude, Expose, Type } from 'class-transformer';
+import { Exclude, Expose, Transform, Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
 class CategoryInGoalDto {
@@ -11,8 +11,15 @@ class CategoryInGoalDto {
 export class GoalResponseDto {
   @Expose() @ApiProperty() id: string;
   @Expose() @ApiProperty() name: string;
-  @Expose() @ApiProperty() targetAmount: number;
-  @Expose() @ApiProperty() currentAmount: number;
+  @Expose()
+  @Transform(({ value }) => (value?.toNumber ? value.toNumber() : Number(value)))
+  @ApiProperty()
+  targetAmount: number;
+
+  @Expose()
+  @Transform(({ value }) => (value?.toNumber ? value.toNumber() : Number(value)))
+  @ApiProperty()
+  currentAmount: number;
   @Expose() @ApiProperty() deadline: Date;
   @Expose() @ApiProperty() status: string;
   @Expose() @ApiProperty() createdAt: Date;

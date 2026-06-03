@@ -1,4 +1,4 @@
-import { Exclude, Expose, Type } from 'class-transformer';
+import { Exclude, Expose, Transform, Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { TransactionType } from './create-transaction.dto';
 
@@ -12,7 +12,10 @@ class CategoryInTransactionDto {
 export class TransactionResponseDto {
   @Expose() @ApiProperty() id: string;
   @Expose() @ApiProperty({ enum: TransactionType }) type: TransactionType;
-  @Expose() @ApiProperty() amount: number;
+  @Expose()
+  @Transform(({ value }) => (value?.toNumber ? value.toNumber() : Number(value)))
+  @ApiProperty()
+  amount: number;
   @Expose() @ApiProperty({ nullable: true }) description: string | null;
   @Expose() @ApiProperty() date: Date;
   @Expose() @ApiProperty() createdAt: Date;
