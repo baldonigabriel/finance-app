@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { GoalStatus } from '@finance-app/shared';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateGoalDto } from './dto/create-goal.dto';
 import { UpdateGoalDto } from './dto/update-goal.dto';
@@ -6,6 +7,18 @@ import { UpdateGoalDto } from './dto/update-goal.dto';
 @Injectable()
 export class GoalsService {
   constructor(private prisma: PrismaService) {}
+
+  private async markExpiredGoals(userId: string): Promise<void> {
+    await this.prisma.goal.updateMany({
+      where: {
+        userId,
+        deletedAt: null,
+        status: GoalStatus.in_progress,
+        deadline: { lt: new Date() },
+      },
+      data: { status: GoalStatus.expired },
+    });
+  }
 
   async create(userId: string, dto: CreateGoalDto) {
     return this.prisma.goal.create({
@@ -21,6 +34,7 @@ export class GoalsService {
   }
 
   async findAll(userId: string) {
+    await this.markExpiredGoals(userId);
     return this.prisma.goal.findMany({
       where: { userId, deletedAt: null },
       include: { category: true },
@@ -29,6 +43,7 @@ export class GoalsService {
   }
 
   async findOne(userId: string, id: string) {
+    await this.markExpiredGoals(userId);
     const goal = await this.prisma.goal.findFirst({
       where: { id, userId, deletedAt: null },
       include: { category: true },
