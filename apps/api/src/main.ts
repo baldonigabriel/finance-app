@@ -4,7 +4,17 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { PrismaExceptionFilter } from './common/filters/prisma-exception.filter';
 
+function assertEnv(key: string): void {
+  if (!process.env[key]) {
+    throw new Error(`Missing required environment variable: ${key}`);
+  }
+}
+
 async function bootstrap() {
+  assertEnv('JWT_SECRET');
+  assertEnv('JWT_REFRESH_SECRET');
+  assertEnv('DATABASE_URL');
+
   const app = await NestFactory.create(AppModule);
 
   app.useGlobalPipes(
