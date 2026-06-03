@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
@@ -120,9 +121,14 @@ export class TransactionsService {
       }),
     ]);
 
-    const totalIncome = Number(incomeAgg._sum.amount ?? 0);
-    const totalExpense = Number(expenseAgg._sum.amount ?? 0);
+    const zero = new Prisma.Decimal(0);
+    const totalIncome = incomeAgg._sum.amount ?? zero;
+    const totalExpense = expenseAgg._sum.amount ?? zero;
 
-    return { totalIncome, totalExpense, balance: totalIncome - totalExpense };
+    return {
+      totalIncome: totalIncome.toNumber(),
+      totalExpense: totalExpense.toNumber(),
+      balance: totalIncome.minus(totalExpense).toNumber(),
+    };
   }
 }
