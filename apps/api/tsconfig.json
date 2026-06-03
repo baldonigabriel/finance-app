@@ -11,12 +11,11 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "baseUrl": "./",
-    "incremental": true,
     "skipLibCheck": true,
     "strictNullChecks": true,
     "noImplicitAny": true,
     "paths": {
-      "@finance-app/shared": ["../../packages/shared/src"]
+      "@finance-app/shared": ["../../packages/shared/dist"]
     }
   },
   "exclude": ["node_modules", "dist", "prisma", "test"]

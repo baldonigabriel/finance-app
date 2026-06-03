@@ -7,15 +7,16 @@ dist
 build
 out
 .next
+packages/shared/dist
 
-# TypeScript build artifacts (compiled output outside dist/)
+# TypeScript build artifacts
 *.tsbuildinfo
-packages/shared/src/**/*.js
-packages/shared/src/**/*.js.map
-packages/shared/src/**/*.d.ts
 apps/api/prisma/*.js
 apps/api/prisma/*.js.map
 apps/api/prisma/*.d.ts
+packages/shared/src/**/*.js
+packages/shared/src/**/*.js.map
+packages/shared/src/**/*.d.ts
 
 # Environment
 .env
