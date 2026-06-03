@@ -78,6 +78,9 @@ model Transaction {
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   category Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
 
+  @@index([userId, deletedAt])
+  @@index([userId, date])
+  @@index([categoryId])
   @@map("transactions")
 }
 
@@ -99,5 +102,7 @@ model Goal {
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   category Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
 
+  @@index([userId, deletedAt])
+  @@index([deadline, status])
   @@map("goals")
 }
