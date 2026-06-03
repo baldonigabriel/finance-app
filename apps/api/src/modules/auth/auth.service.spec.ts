@@ -30,6 +30,8 @@ const makeUser = (overrides: Partial<{
   isVerified: true,
   verificationCode: null,
   verificationCodeExpiresAt: null,
+  passwordResetToken: null,
+  passwordResetTokenExpiresAt: null,
   createdAt: new Date(),
   updatedAt: new Date(),
   ...overrides,
