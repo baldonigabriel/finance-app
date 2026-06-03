@@ -6,8 +6,8 @@ export class VerifyEmailDto {
   @IsEmail()
   email: string;
 
-  @ApiProperty({ example: '4821' })
+  @ApiProperty({ example: 'A3KX7M' })
   @IsString()
-  @Length(4, 4, { message: 'O código deve ter exatamente 4 dígitos' })
+  @Length(6, 6, { message: 'O código deve ter exatamente 6 caracteres' })
   code: string;
 }

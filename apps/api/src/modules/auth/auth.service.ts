@@ -9,7 +9,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcryptjs';
-import { randomInt, createHash } from 'crypto';
+import { randomBytes, createHash } from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EmailService } from './email.service';
 import { RegisterDto } from './dto/register.dto';
@@ -26,8 +26,14 @@ const DEFAULT_CATEGORIES = [
   { name: 'Outros', icon: 'circle-ellipsis' },
 ];
 
+const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no I/O/0/1 to avoid confusion
+const CODE_LENGTH = 6;
+
 function generateCode(): string {
-  return randomInt(1000, 10000).toString();
+  const bytes = randomBytes(CODE_LENGTH);
+  return Array.from(bytes)
+    .map((b) => CODE_ALPHABET[b % CODE_ALPHABET.length])
+    .join('');
 }
 
 function hashCode(code: string): string {
