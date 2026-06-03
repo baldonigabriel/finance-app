@@ -15,6 +15,8 @@ import { EmailService } from './email.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 
 const DEFAULT_CATEGORIES = [
   { name: 'Alimentação', icon: 'utensils' },
@@ -133,6 +135,53 @@ export class AuthService {
 
   async refreshTokens(userId: string, email: string) {
     return this.generateTokens(userId, email);
+  }
+
+  async forgotPassword(dto: ForgotPasswordDto) {
+    const user = await this.prisma.user.findUnique({ where: { email: dto.email } });
+
+    // Always return the same message to prevent email enumeration
+    const genericResponse = { message: 'Se esse e-mail estiver cadastrado, você receberá um link em instantes.' };
+
+    if (!user || !user.isVerified) return genericResponse;
+
+    const rawToken = randomBytes(32).toString('hex');
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL') ?? 'http://localhost:3000';
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordResetToken: hashCode(rawToken),
+        passwordResetTokenExpiresAt: new Date(Date.now() + 60 * 60 * 1000), // 1 hour
+      },
+    });
+
+    const resetUrl = `${frontendUrl}/reset-password?token=${rawToken}`;
+    await this.emailService.sendPasswordResetLink(user.email, resetUrl, user.name ?? '');
+
+    return genericResponse;
+  }
+
+  async resetPassword(dto: ResetPasswordDto) {
+    const user = await this.prisma.user.findFirst({
+      where: {
+        passwordResetToken: hashCode(dto.token),
+        passwordResetTokenExpiresAt: { gt: new Date() },
+      },
+    });
+
+    if (!user) throw new BadRequestException('Token inválido ou expirado.');
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password: await bcrypt.hash(dto.password, 10),
+        passwordResetToken: null,
+        passwordResetTokenExpiresAt: null,
+      },
+    });
+
+    return { message: 'Senha redefinida com sucesso.' };
   }
 
   private async generateTokens(userId: string, email: string) {
