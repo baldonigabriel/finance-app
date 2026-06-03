@@ -87,7 +87,7 @@ finance-app/
 
 ## Prerequisites
 
-- [Node.js](https://nodejs.org/) >= 20
+- [Node.js](https://nodejs.org/) >= 20 (tested up to Node.js 24)
 - [pnpm](https://pnpm.io/) >= 9 — `npm install -g pnpm`
 - [Docker](https://www.docker.com/) (for local PostgreSQL)
 
@@ -171,6 +171,8 @@ Or run everything together:
 pnpm dev
 ```
 
+> `pnpm dev` automatically builds `@finance-app/shared` before starting the servers.
+
 ---
 
 ## URLs
@@ -216,9 +218,13 @@ Authorization: Bearer <access_token>
 
 | Method | Route | Description |
 |---|---|---|
-| `POST` | `/auth/register` | Registration |
+| `POST` | `/auth/register` | Registration (sends email verification code) |
+| `POST` | `/auth/verify-email` | Verify email with 6-char code |
+| `POST` | `/auth/resend-code` | Resend verification code |
 | `POST` | `/auth/login` | Login |
-| `POST` | `/auth/refresh` | Refresh token |
+| `POST` | `/auth/refresh` | Refresh access token |
+| `POST` | `/auth/forgot-password` | Request password reset email |
+| `POST` | `/auth/reset-password` | Reset password with token |
 | `GET` | `/users/me` | User profile |
 | `PATCH` | `/users/me` | Update profile |
 | `GET` | `/transactions` | List transactions (filters: `type`, `categoryId`, `startDate`, `endDate`) |
